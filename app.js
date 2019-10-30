@@ -22,6 +22,7 @@ app.get('/', (req, res) => {
 });
 
 //////////////// Authorization ////////////////
+// Redirect the user to login and authorize the app
 app.get('/login', (req, res) => {
     var scope = 'user-read-private user-read-email user-top-read user-read-recently-played';
     var state = generateRandomString(16);
@@ -38,6 +39,7 @@ app.get('/login', (req, res) => {
         }));
 });
 
+// Request acces-token from spotify after the user authorize the app
 app.get('/token', (req, res) => {
     // application requests refresh and access tokens
     // after validating the state parameter
@@ -84,6 +86,7 @@ app.get('/token', (req, res) => {
     }
 });
 
+// Requset to refresh the acces_token after expiration
 app.get('/refresh_token', (req, res) => {
     // requesting access token using the refresh token
 
@@ -110,6 +113,7 @@ app.get('/refresh_token', (req, res) => {
 });
 
 //////////////// Data Requests ////////////////
+// fetch user data
 app.get('/me', async (req, res) => {
     const response = await spotify.get('/me', {
         headers: {
@@ -123,6 +127,7 @@ app.get('/me', async (req, res) => {
     res.send(response);
 });
 
+// fetch user recently played
 app.get('/recently-played', async (req, res) => {
     const response = await spotify.get('/me/player/recently-played', {
         headers: {
@@ -136,8 +141,9 @@ app.get('/recently-played', async (req, res) => {
     res.send(response);
 });
 
-app.get('/user-top', async (req, res) => {
-    const response = await spotify.get('/me/top/recently-played', {
+// fetch user top tracks / artists
+app.get('/user-top-x', async (req, res) => {
+    const response = await spotify.get(`/me/top/${req.body.type}`, {
         headers: {
             Authorization: req.headers.authorization
         }
