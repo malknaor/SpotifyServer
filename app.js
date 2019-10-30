@@ -3,7 +3,9 @@ const request = require('request');
 const queryString = require('querystring');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 
+const { spotify } = require('./spotify');
 const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = require('./hide');
 const { generateRandomString } = require('./utils');
 
@@ -19,7 +21,7 @@ app.get('/', (req, res) => {
     res.send('Welcome to my spotify server!');
 });
 
-//////////////// App Authorization ////////////////
+//////////////// Authorization ////////////////
 app.get('/login', (req, res) => {
     var scope = 'user-read-private user-read-email user-top-read user-read-recently-played';
     var state = generateRandomString(16);
@@ -67,8 +69,8 @@ app.get('/token', (req, res) => {
 
         request.post(authOptions, (error, response, body) => {
             if (!error && response.statusCode === 200) {
-                // var acces_token = body.acces_token;
-                // var refresh_token = body.refresh_token;
+                var acces_token = body.acces_token;
+                var refresh_token = body.refresh_token;
 
                 res.redirect('http://127.0.0.1:3000/?' +
                     queryString.stringify(body));
@@ -105,6 +107,46 @@ app.get('/refresh_token', (req, res) => {
             res.send(body);
         }
     });
+});
+
+//////////////// Data Requests ////////////////
+app.get('/me', async (req, res) => {
+    const response = await spotify.get('/me', {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .then(res => res.data)
+    .catch(err => err.message);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(response);
+});
+
+app.get('/recently-played', async (req, res) => {
+    const response = await spotify.get('/me/player/recently-played', {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .then(res => res.data)
+    .catch(err => err.message);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(response);
+});
+
+app.get('/user-top', async (req, res) => {
+    const response = await spotify.get('/me/top/recently-played', {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .then(res => res.data)
+    .catch(err => err.message);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(response);
 });
 
 //////////////// Error Handling ////////////////
