@@ -16,6 +16,7 @@ const app = express();
 
 app.use(cors());
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
     res.send('Welcome to my spotify server!');
@@ -23,8 +24,8 @@ app.get('/', (req, res) => {
 
 //////////////// Authorization ////////////////
 // Redirect the user to login and authorize the app
-app.get('/login', (req, res) => {
-    var scope = 'user-read-private user-read-email user-top-read user-read-recently-played';
+app.get('/login', (req, res) => { 
+    var scope = 'user-read-private user-read-email user-top-read user-read-recently-played user-modify-playback-state user-read-playback-state';
     var state = generateRandomString(16);
 
     res.cookie(stateKey, state);
@@ -74,7 +75,7 @@ app.get('/token', (req, res) => {
                 var acces_token = body.acces_token;
                 var refresh_token = body.refresh_token;
 
-                res.redirect('http://127.0.0.1:3000/?' +
+                res.redirect('http://localhost:3000/?' +
                     queryString.stringify(body));
             } else {
                 res.redirect('/#' +
@@ -90,11 +91,12 @@ app.get('/token', (req, res) => {
 app.get('/refresh_token', (req, res) => {
     // requesting access token using the refresh token
 
-    var refresh_token = req.query.refresh_token;
+    var refresh_token = req.body.refresh_token;
     var authOptions = {
         url: 'https://accounts.spotify.com/api/token',
-        header: {
-            'Authorization': 'Basic ' + (Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
+        headers: {
+            'Authorization': 'Basic ' + (Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+            'Content-Type': 'application/x-www-form-urlencoded'
         },
         form: {
             grant_type: 'refresh_token',
@@ -104,16 +106,19 @@ app.get('/refresh_token', (req, res) => {
     };
 
     request.post(authOptions, (error, response, body) => {
-        if(!error && response.statusCode === 200) {
-            var access_token = body.acces_token;
-
+        if (!error && !body.error && response.statusCode === 200) {
             res.send(body);
+        } else {
+            res.status(response.statusCode).send({
+                statusCode: response.statusCode,
+                ...body
+            });
         }
     });
 });
 
-//////////////// Data Requests ////////////////
-// fetch user data
+//////////////// Requests ////////////////
+// fetch user
 app.get('/me', async (req, res) => {
     const response = await spotify.get('/me', {
         headers: {
@@ -143,7 +148,7 @@ app.get('/recently-played', async (req, res) => {
 
 // fetch user top tracks / artists
 app.get('/user-top-x', async (req, res) => {
-    const response = await spotify.get(`/me/top/${req.body.type}`, {
+    const response = await spotify.get(`/me/top/${req.headers.type}`, {
         headers: {
             Authorization: req.headers.authorization
         }
@@ -154,6 +159,42 @@ app.get('/user-top-x', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(response);
 });
+
+// search tracks / artists
+app.get('/search', async (req, res) => {
+    const response = await spotify.get(`/search?${queryString.stringify(req.query)}`, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .then(res => res.data)
+    .catch(err => err.message);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(response);
+});
+
+//////////////// Spotify Player ////////////////
+// fetch user available devices
+app.get('/devices', async (req, res) => {
+    const response = await spotify.get('/me/player/devices', {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .then(res => res.data)
+    .catch(err => err.message);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(response);
+});
+
+// export const REPEAT = '/me/player/repeat';
+// export const PREV_SONG = '/me/player/previous';
+// export const PAUSE_SONG = '/me/player/pause';
+// export const PLAY_SONG = '/me/player/play';
+// export const NEXT_SONG = '/me/player/next';
+// export const SHUFFLE = '/me/player/shuffle';
 
 //////////////// Error Handling ////////////////
 app.get('*', (req, res) => {
