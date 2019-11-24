@@ -91,7 +91,7 @@ app.get('/token', (req, res) => {
 app.get('/refresh_token', (req, res) => {
     // requesting access token using the refresh token
 
-    var refresh_token = req.body.refresh_token;
+    var refresh_token = req.query.refresh_token;
     var authOptions = {
         url: 'https://accounts.spotify.com/api/token',
         headers: {
@@ -126,10 +126,14 @@ app.get('/me', async (req, res) => {
         }
     })
     .then(res => res.data)
-    .catch(err => err.message);
+    .catch(err => err.response);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(response);
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send({ config: response.config, data: response.data});    
+    } else {
+        res.send(response);
+    }
 });
 
 // fetch user recently played
@@ -140,10 +144,14 @@ app.get('/recently-played', async (req, res) => {
         }
     })
     .then(res => res.data)
-    .catch(err => err.message);
+    .catch(err => err.response);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(response);
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response);    
+    } else {
+        res.send(response);
+    }
 });
 
 // fetch user top tracks / artists
@@ -154,10 +162,14 @@ app.get('/user-top-x', async (req, res) => {
         }
     })
     .then(res => res.data)
-    .catch(err => err.message);
+    .catch(err => err.response);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(response);
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response);    
+    } else {
+        res.send(response);
+    }
 });
 
 // search tracks / artists
@@ -168,10 +180,14 @@ app.get('/search', async (req, res) => {
         }
     })
     .then(res => res.data)
-    .catch(err => err.message);
+    .catch(err => err.response);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(response);
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response);    
+    } else {
+        res.send(response);
+    }
 });
 
 //////////////// Spotify Player ////////////////
@@ -183,10 +199,14 @@ app.get('/devices', async (req, res) => {
         }
     })
     .then(res => res.data)
-    .catch(err => err.message);
+    .catch(err => err.response);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(response);
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response);    
+    } else {
+        res.send(response);
+    }
 });
 
 // export const REPEAT = '/me/player/repeat';
