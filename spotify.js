@@ -5,5 +5,5 @@ const spotify = axios.create({
 });
 
 module.exports = {
-    spotify: spotify
+    spotify
 };
