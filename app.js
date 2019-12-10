@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 const { spotify } = require('./spotify');
-const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = require('./hide');
 const { generateRandomString } = require('./utils');
 
 const PORT = process.env.PORT || 8888;
@@ -24,8 +23,8 @@ app.get('/', (req, res) => {
 
 //////////////// Authorization ////////////////
 // Redirect the user to login and authorize the app
-app.get('/login', (req, res) => { 
-    var scope = 'user-read-private user-read-email user-top-read user-read-recently-played user-modify-playback-state user-read-playback-state';
+app.get('/login', (req, res) => {
+    var scope = 'user-read-private user-read-email user-top-read user-read-recently-played user-modify-playback-state user-read-playback-state streaming';
     var state = generateRandomString(16);
 
     res.cookie(stateKey, state);
@@ -33,9 +32,9 @@ app.get('/login', (req, res) => {
     res.redirect('https://accounts.spotify.com/authorize?' +
         queryString.stringify({
             response_type: 'code',
-            client_id: CLIENT_ID,
+            client_id: process.env.CLIENT_ID,
             scope: scope,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: process.env.REDIRECT_URI,
             state: state
         }));
 });
@@ -45,11 +44,11 @@ app.get('/token', (req, res) => {
     // application requests refresh and access tokens
     // after validating the state parameter
 
-    var code = req.query.code || null;
+    const { code } = req.query;
     var state = req.query.state || null;
     var storedState = req.cookies ? req.cookies[stateKey] : null;
 
-    if (state === null || state !== storedState) {
+    if (!state || state !== storedState) {
         res.redirect('/#' +
             queryString.stringify({
                 error: 'state_mismatch'
@@ -61,11 +60,11 @@ app.get('/token', (req, res) => {
             url: 'https://accounts.spotify.com/api/token',
             form: {
                 code: code,
-                redirect_uri: REDIRECT_URI,
+                redirect_uri: process.env.REDIRECT_URI,
                 grant_type: 'authorization_code'
             },
             headers: {
-                'Authorization': 'Basic ' + (Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'))
+                'Authorization': 'Basic ' + (Buffer.from(process.env.CLIENT_ID + ':' + process.env.CLIENT_SECRET).toString('base64'))
             },
             json: true
         };
@@ -95,7 +94,7 @@ app.get('/refresh_token', (req, res) => {
     var authOptions = {
         url: 'https://accounts.spotify.com/api/token',
         headers: {
-            'Authorization': 'Basic ' + (Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')),
+            'Authorization': 'Basic ' + (Buffer.from(process.env.CLIENT_ID + ':' + process.env.CLIENT_SECRET).toString('base64')),
             'Content-Type': 'application/x-www-form-urlencoded'
         },
         form: {
@@ -130,7 +129,7 @@ app.get('/me', async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (response.status !== undefined && response.status !== 200) {
-        res.status(response.status).send({ config: response.config, data: response.data});    
+        res.status(response.status).send({ config: response.config, data: response.data});
     } else {
         res.send(response);
     }
@@ -148,7 +147,7 @@ app.get('/recently-played', async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (response.status !== undefined && response.status !== 200) {
-        res.status(response.status).send(response);    
+        res.status(response.status).send(response);
     } else {
         res.send(response);
     }
@@ -166,7 +165,7 @@ app.get('/user-top-x', async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (response.status !== undefined && response.status !== 200) {
-        res.status(response.status).send(response);    
+        res.status(response.status).send(response);
     } else {
         res.send(response);
     }
@@ -184,7 +183,25 @@ app.get('/search', async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (response.status !== undefined && response.status !== 200) {
-        res.status(response.status).send(response);    
+        res.status(response.status).send(response);
+    } else {
+        res.send(response);
+    }
+});
+
+// get recommendations
+app.get('/default-search-content', async (req, res) => {
+    const response = await spotify.get(`/recommendations?${queryString.stringify(req.query)}`, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .then(res => res.data)
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response);
     } else {
         res.send(response);
     }
@@ -203,16 +220,38 @@ app.get('/devices', async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (response.status !== undefined && response.status !== 200) {
-        res.status(response.status).send(response);    
+        res.status(response.status).send(response);
     } else {
         res.send(response);
     }
 });
 
+// app.get('/player/play', async (req, res) => {
+//     const response = await spotify.put('/me/player/play', {
+//         headers: {
+//             Authorization: req.headers.authorization
+//         },
+//         params: {
+//             device_id: 
+//         }
+//     })
+//     .then(res => res.data)
+//     .catch(err => err.response);
+
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.send(response);
+//     // if (response.status !== undefined && response.status !== 200) {
+//     //     res.status(response.status).send(response);    
+//     // } else {
+//     //     res.send(response);
+//     // }
+// });
+
+// Play song '/me/player/play';
+// 
 // export const REPEAT = '/me/player/repeat';
 // export const PREV_SONG = '/me/player/previous';
 // export const PAUSE_SONG = '/me/player/pause';
-// export const PLAY_SONG = '/me/player/play';
 // export const NEXT_SONG = '/me/player/next';
 // export const SHUFFLE = '/me/player/shuffle';
 

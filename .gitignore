@@ -4,7 +4,7 @@
 
 ### Node ###
 # Sensitive
-# hide.js
+.env
 
 # Logs
 logs
