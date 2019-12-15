@@ -207,54 +207,6 @@ app.get('/default-search-content', async (req, res) => {
     }
 });
 
-//////////////// Spotify Player ////////////////
-// fetch user available devices
-app.get('/devices', async (req, res) => {
-    const response = await spotify.get('/me/player/devices', {
-        headers: {
-            Authorization: req.headers.authorization
-        }
-    })
-    .then(res => res.data)
-    .catch(err => err.response);
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    if (response.status !== undefined && response.status !== 200) {
-        res.status(response.status).send(response);
-    } else {
-        res.send(response);
-    }
-});
-
-// app.get('/player/play', async (req, res) => {
-//     const response = await spotify.put('/me/player/play', {
-//         headers: {
-//             Authorization: req.headers.authorization
-//         },
-//         params: {
-//             device_id: 
-//         }
-//     })
-//     .then(res => res.data)
-//     .catch(err => err.response);
-
-//     res.setHeader('Access-Control-Allow-Origin', '*');
-//     res.send(response);
-//     // if (response.status !== undefined && response.status !== 200) {
-//     //     res.status(response.status).send(response);    
-//     // } else {
-//     //     res.send(response);
-//     // }
-// });
-
-// Play song '/me/player/play';
-// 
-// export const REPEAT = '/me/player/repeat';
-// export const PREV_SONG = '/me/player/previous';
-// export const PAUSE_SONG = '/me/player/pause';
-// export const NEXT_SONG = '/me/player/next';
-// export const SHUFFLE = '/me/player/shuffle';
-
 //////////////// Error Handling ////////////////
 app.get('*', (req, res) => {
     res.sendStatus(404);
