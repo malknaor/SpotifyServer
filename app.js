@@ -16,6 +16,7 @@ const app = express();
 app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
     res.send('Welcome to my spotify server!');
@@ -202,6 +203,126 @@ app.get('/default-search-content', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (response.status !== undefined && response.status !== 200) {
         res.status(response.status).send(response);
+    } else {
+        res.send(response);
+    }
+});
+
+//////////////// Spotify Player ////////////////
+// Set volume
+app.put('/player/set-volume', async (req, res) => {
+    const response = await spotify.put(`/me/player/volume?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Set repeat
+app.put('/player/repeat', async (req, res) => {
+    const response = await spotify.put(`/me/player/repeat?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Go to previous track
+app.post('/player/previous', async (req, res) => {
+    const response = await spotify.post(`/me/player/previous?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Pause current playing track
+app.put('/player/pause', async (req, res) => {
+    const response = await spotify.put(`/me/player/pause?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Play/Resume current playing track
+app.put('/player/play', async (req, res) => {
+    const response = await spotify.put(`/me/player/play?${queryString.stringify(req.query)}`, req.body, {
+        headers: {
+            Authorization: req.headers.authorization,
+            "Content-Type": "application/json"
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Go to next track
+app.post('/player/next', async (req, res) => {
+    const response = await spotify.post(`/me/player/next?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Go to next track
+app.put('/player/shuffle', async (req, res) => {
+    const response = await spotify.put(`/me/player/shuffle?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
     } else {
         res.send(response);
     }
