@@ -311,9 +311,26 @@ app.post('/player/next', async (req, res) => {
     }
 });
 
-// Go to next track
+// Set shuffle
 app.put('/player/shuffle', async (req, res) => {
     const response = await spotify.put(`/me/player/shuffle?${queryString.stringify(req.query)}`, {}, {
+        headers: {
+            Authorization: req.headers.authorization
+        }
+    })
+    .catch(err => err.response);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (response.status !== undefined && response.status !== 200) {
+        res.status(response.status).send(response.data);
+    } else {
+        res.send(response);
+    }
+});
+
+// Seek to position
+app.put('/player/seek', async (req, res) => {
+    const response = await spotify.put(`/me/player/seek?${queryString.stringify(req.query)}`, {}, {
         headers: {
             Authorization: req.headers.authorization
         }
